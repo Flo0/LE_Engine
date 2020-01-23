@@ -10,6 +10,7 @@ import java.util.EnumMap;
 import javax.swing.JPanel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
 
 /*******************************************************
  * Copyright (C) Gestankbratwurst suotokka@gmail.com
@@ -55,6 +56,11 @@ public class GameGraphicController extends JPanel implements Runnable {
   @Setter
   private Color fpsColor = Color.BLACK;
   private final EngineCore engineCore;
+  @Getter
+  @Setter
+  private int fpsLimit = 60;
+  private int fpsCounter = 0;
+  private long lastDrawCycle;
 
   public double getFPS() {
     if (System.currentTimeMillis() - lastCheck >= MS_PER_FPS_REFRESH) {
@@ -129,10 +135,18 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
+  @SneakyThrows
   @Override
   public void run() {
+    lastDrawCycle = System.currentTimeMillis();
     while (engineCore.isGameRunning()) {
       scheduleRepaint();
+      if (++fpsCounter == fpsLimit) {
+        fpsCounter = 0;
+        long millisLeft = 1000 - (System.currentTimeMillis() - lastDrawCycle);
+        Thread.sleep(millisLeft);
+        lastDrawCycle = System.currentTimeMillis();
+      }
     }
   }
 
