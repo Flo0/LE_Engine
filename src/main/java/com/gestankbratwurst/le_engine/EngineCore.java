@@ -42,7 +42,7 @@ public class EngineCore {
   private static EngineCore instance;
 
   public static EngineCore init(String gameName, int threadPoolSize, LogicPrecision logicPrecision, int TPS) {
-    Preconditions.checkState(instance != null);
+    Preconditions.checkState(instance == null);
     EngineCore engineCore = new EngineCore(gameName, threadPoolSize, logicPrecision);
     EngineCore.TPS = TPS;
     instance = engineCore;

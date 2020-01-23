@@ -1,7 +1,7 @@
 package com.gestankbratwurst.le_engine.graphics;
 
 import com.gestankbratwurst.le_engine.debug.DebugConsole;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -28,7 +28,7 @@ public class GameGraphicController extends JPanel implements Runnable {
     this.setDoubleBuffered(true);
     graphicsQueue = new EnumMap<>(GraphicPriority.class);
     for (GraphicPriority priority : GraphicPriority.values()) {
-      graphicsQueue.put(priority, new ObjectOpenHashSet<>());
+      graphicsQueue.put(priority, new Object2ObjectOpenHashMap<>());
     }
     for (int i = 0; i < FRAME_TRACK_AMOUNT; i++) {
       fpsEstimates[i] = 60L;
@@ -43,7 +43,7 @@ public class GameGraphicController extends JPanel implements Runnable {
   @Getter
   @Setter
   private final Font fpsFont;
-  private final EnumMap<GraphicPriority, ObjectOpenHashSet<GTask>> graphicsQueue;
+  private final EnumMap<GraphicPriority, Object2ObjectOpenHashMap<String, GTask>> graphicsQueue;
   private final long[] fpsEstimates = new long[FRAME_TRACK_AMOUNT];
   private int estimateIndex = 0;
   @Getter
@@ -67,20 +67,20 @@ public class GameGraphicController extends JPanel implements Runnable {
     return lastEstimate;
   }
 
-  public void addGraphicTask(GraphicPriority priority, GTask task) {
+  public void putGraphicTask(GraphicPriority priority, String taskID, GTask task) {
     synchronized (graphicsQueue) {
-      graphicsQueue.get(priority).add(task);
+      graphicsQueue.get(priority).put(taskID, task);
     }
   }
 
-  public void addGraphicTask(GTask task) {
-    addGraphicTask(GraphicPriority.MEDIUM, task);
+  public void putGraphicTask(GTask task, String taskID) {
+    putGraphicTask(GraphicPriority.MEDIUM, taskID, task);
   }
 
-  public void removeGraphicTask(GTask task) {
+  public void removeGraphicTask(String taskID) {
     synchronized (graphicsQueue) {
-      for (ObjectOpenHashSet<GTask> set : graphicsQueue.values()) {
-        set.remove(task);
+      for (Object2ObjectOpenHashMap<String, GTask> map : graphicsQueue.values()) {
+        map.remove(taskID);
       }
     }
   }
@@ -89,7 +89,7 @@ public class GameGraphicController extends JPanel implements Runnable {
   public void paint(Graphics graphics) {
     synchronized (graphicsQueue) {
       for (GraphicPriority priority : GraphicPriority.values()) {
-        for (GTask task : graphicsQueue.get(priority)) {
+        for (GTask task : graphicsQueue.get(priority).values()) {
           task.accept(graphics);
         }
       }
