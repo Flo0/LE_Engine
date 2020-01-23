@@ -73,8 +73,10 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
-  public void putGraphicTask(GTask task, String taskID) {
-    putGraphicTask(GraphicPriority.MEDIUM, taskID, task);
+  public void putGraphicTask(String taskID, GTask task) {
+    synchronized (graphicsQueue) {
+      putGraphicTask(GraphicPriority.MEDIUM, taskID, task);
+    }
   }
 
   public void removeGraphicTask(String taskID) {
