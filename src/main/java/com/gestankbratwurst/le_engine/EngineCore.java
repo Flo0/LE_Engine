@@ -78,6 +78,8 @@ public class EngineCore {
   private final DataManager dataManager;
   @Getter
   private boolean gameRunning = false;
+  @Getter
+  private boolean consoleEnabled = false;
 
   public void shutdown() {
     try {
@@ -128,6 +130,7 @@ public class EngineCore {
   public void setSizeAndOpen(StartMenuData startMenuData) {
     if (startMenuData.isUseConsole()) {
       DebugConsole.create();
+      this.consoleEnabled = true;
     }
     this.gameResolution = startMenuData.getGameResolution();
     Dimension dimension = new Dimension(gameResolution.getWidth(), gameResolution.getHeight());
