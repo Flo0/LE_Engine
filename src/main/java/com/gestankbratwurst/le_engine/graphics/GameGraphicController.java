@@ -1,5 +1,6 @@
 package com.gestankbratwurst.le_engine.graphics;
 
+import com.gestankbratwurst.le_engine.EngineCore;
 import com.gestankbratwurst.le_engine.debug.DebugConsole;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import java.awt.Color;
@@ -24,7 +25,8 @@ public class GameGraphicController extends JPanel implements Runnable {
   private static final int FRAME_TRACK_AMOUNT = 5;
   private static final long MS_PER_FPS_REFRESH = 1000L;
 
-  public GameGraphicController() {
+  public GameGraphicController(EngineCore engineCore) {
+    this.engineCore = engineCore;
     this.setDoubleBuffered(true);
     graphicsQueue = new EnumMap<>(GraphicPriority.class);
     for (GraphicPriority priority : GraphicPriority.values()) {
@@ -52,6 +54,7 @@ public class GameGraphicController extends JPanel implements Runnable {
   @Getter
   @Setter
   private Color fpsColor = Color.BLACK;
+  private final EngineCore engineCore;
 
   public double getFPS() {
     if (System.currentTimeMillis() - lastCheck >= MS_PER_FPS_REFRESH) {
@@ -116,14 +119,20 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
-  @Override
-  public void run() {
+  private void scheduleRepaint() {
     try {
       repaint();
     } catch (Exception e) {
       for (StackTraceElement trace : e.getStackTrace()) {
         DebugConsole.log(trace);
       }
+    }
+  }
+
+  @Override
+  public void run() {
+    while (engineCore.isGameRunning()) {
+      scheduleRepaint();
     }
   }
 

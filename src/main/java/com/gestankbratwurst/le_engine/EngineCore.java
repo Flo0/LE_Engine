@@ -54,7 +54,7 @@ public class EngineCore {
     this.logicPrecision = logicPrecision;
     this.dataManager = new DataManager(this);
     mainWindow = new JFrame(gameName);
-    gameGraphicController = new GameGraphicController();
+    gameGraphicController = new GameGraphicController(this);
     gameLogicController = new GameLogicController();
     gameAudioController = new GameAudioController();
     threadPoolExecutor = new ScheduledThreadPoolExecutor(threadPoolSize);
@@ -146,8 +146,8 @@ public class EngineCore {
   private void setup() {
     long scheduleRate = logicPrecision.getSecondsExponend() / TPS;
     TimeUnit timeUnit = logicPrecision.getTimeUnit();
+    threadPoolExecutor.execute(gameGraphicController);
     threadPoolExecutor.scheduleAtFixedRate(gameLogicController, 0L, scheduleRate, timeUnit);
-    threadPoolExecutor.scheduleAtFixedRate(gameGraphicController, 0L, 1L, TimeUnit.MILLISECONDS);
     try {
       dataManager.loadData();
     } catch (IOException e) {
