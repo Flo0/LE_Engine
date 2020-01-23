@@ -9,6 +9,11 @@
   <version>1.0.1-SNAPSHOT</version>
 
   <distributionManagement>
+    <snapshotRepository>
+      <id>nexus-snapshots</id>
+      <name>Avarion Snapshots</name>
+      <url>http://repo.avarioncraft.de/repository/maven-snapshots/</url>
+    </snapshotRepository>
     <repository>
       <id>nexus-releases</id>
       <url>http://repo.avarioncraft.de/repository/maven-releases/</url>
