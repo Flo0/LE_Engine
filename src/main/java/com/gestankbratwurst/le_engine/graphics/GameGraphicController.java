@@ -121,7 +121,7 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
     if (internalFpsDrawerEnabled) {
       double fps = getFPS();
-      graphics.setColor(Color.BLACK);
+      graphics.setColor(fpsColor);
       graphics.setFont(fpsFont);
       graphics.drawString("" + (int) fps, 6, 23);
     }

@@ -1,7 +1,6 @@
 package com.gestankbratwurst.le_engine.audio;
 
 import com.google.common.collect.Maps;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,9 +36,7 @@ public class GameAudioController {
     }
     try {
       clip.open(audioIn);
-    } catch (LineUnavailableException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+    } catch (LineUnavailableException | IOException e) {
       e.printStackTrace();
     }
     audioClips.put(clipName, clip);
@@ -50,9 +47,7 @@ public class GameAudioController {
     Clip clip = null;
     try {
       clip = createClip(AudioSystem.getAudioInputStream(soundFile), clipName);
-    } catch (UnsupportedAudioFileException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+    } catch (UnsupportedAudioFileException | IOException e) {
       e.printStackTrace();
     }
     return clip;
@@ -63,9 +58,7 @@ public class GameAudioController {
     try {
       AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(inputStream);
       clip = createClip(audioInputStream, clipName);
-    } catch (UnsupportedAudioFileException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+    } catch (UnsupportedAudioFileException | IOException e) {
       e.printStackTrace();
     }
     return clip;
@@ -76,9 +69,7 @@ public class GameAudioController {
     try {
       AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
       clip = createClip(audioInputStream, clipName);
-    } catch (UnsupportedAudioFileException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
+    } catch (UnsupportedAudioFileException | IOException e) {
       e.printStackTrace();
     }
     return clip;
@@ -86,6 +77,15 @@ public class GameAudioController {
 
   public synchronized Clip getClip(String clipName) {
     return audioClips.get(clipName);
+  }
+
+  public synchronized void playSound(String clipName) {
+    Clip clip = getClip(clipName);
+    if (clip == null) {
+      return;
+    }
+    clip.setFramePosition(0);
+    clip.start();
   }
 
   private final Map<String, Clip> audioClips;

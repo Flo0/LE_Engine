@@ -39,7 +39,7 @@ public class DataManager {
     }
     rootFolder = root;
     rootFolder.mkdirs();
-    this.mainDataFile = new File(rootFolder, engineCore.getGameName().replace(" ", "_") + ".json");
+    this.mainDataFile = new File(rootFolder, engineCore.getGameName().replace(" ", "_") + "_data.json");
   }
 
   @Getter
