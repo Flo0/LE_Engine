@@ -138,15 +138,23 @@ public class GameGraphicController extends JPanel implements Runnable {
   @SneakyThrows
   @Override
   public void run() {
-    lastDrawCycle = System.currentTimeMillis();
+    this.lastDrawCycle = System.currentTimeMillis();
     while (engineCore.isGameRunning()) {
       scheduleRepaint();
       if (++fpsCounter == fpsLimit) {
         fpsCounter = 0;
-        long millisLeft = 1000 - (System.currentTimeMillis() - lastDrawCycle);
-        Thread.sleep(millisLeft);
-        lastDrawCycle = System.currentTimeMillis();
+        sleep(1000 - (System.currentTimeMillis() - lastDrawCycle));
+        this.lastDrawCycle = System.nanoTime();
       }
+    }
+  }
+
+  private void sleep(long millisToSleep) {
+    try {
+      DebugConsole.log("Sleep");
+      Thread.sleep(millisToSleep);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
   }
 
