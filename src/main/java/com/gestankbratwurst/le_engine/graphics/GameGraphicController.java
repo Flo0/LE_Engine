@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.util.EnumMap;
+import java.util.concurrent.locks.LockSupport;
 import javax.swing.JPanel;
 import lombok.Getter;
 import lombok.Setter;
@@ -59,8 +60,9 @@ public class GameGraphicController extends JPanel implements Runnable {
   @Getter
   @Setter
   private int fpsLimit = 60;
-  private int fpsCounter = 0;
-  private long lastDrawCycle;
+  @Getter
+  @Setter
+  private boolean fpsLimitEnabled = false;
 
   public double getFPS() {
     if (System.currentTimeMillis() - lastCheck >= MS_PER_FPS_REFRESH) {
@@ -135,27 +137,21 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
-  @SneakyThrows
   @Override
   public void run() {
-    this.lastDrawCycle = System.currentTimeMillis();
     while (engineCore.isGameRunning()) {
+      long prePaint = System.nanoTime();
       scheduleRepaint();
-      if (++fpsCounter == fpsLimit) {
-        fpsCounter = 0;
-        sleep(1000 - (System.currentTimeMillis() - lastDrawCycle));
-        this.lastDrawCycle = System.nanoTime();
+      if (fpsLimitEnabled) {
+        long paintTimeMicros = (System.nanoTime() - prePaint) / 1000L;
+        long microsToSleep = 1000000L / fpsLimit - paintTimeMicros;
+        sleepMicros(microsToSleep);
       }
     }
   }
 
-  private void sleep(long millisToSleep) {
-    try {
-      DebugConsole.log("Sleep");
-      Thread.sleep(millisToSleep);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+  private void sleepMicros(long microsToSleep) {
+    LockSupport.parkNanos(microsToSleep * 1000);
   }
 
 }

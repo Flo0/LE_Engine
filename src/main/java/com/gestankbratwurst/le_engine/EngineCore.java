@@ -5,6 +5,7 @@ import com.gestankbratwurst.le_engine.data.DataManager;
 import com.gestankbratwurst.le_engine.debug.DebugConsole;
 import com.gestankbratwurst.le_engine.graphics.GameGraphicController;
 import com.gestankbratwurst.le_engine.logic.GameLogicController;
+import com.gestankbratwurst.le_engine.logic.GameScheduler;
 import com.gestankbratwurst.le_engine.logic.LogicPrecision;
 import com.gestankbratwurst.le_engine.startmenu.GameResolution;
 import com.gestankbratwurst.le_engine.startmenu.StartMenu;
@@ -55,7 +56,8 @@ public class EngineCore {
     this.dataManager = new DataManager(this);
     mainWindow = new JFrame(gameName);
     gameGraphicController = new GameGraphicController(this);
-    gameLogicController = new GameLogicController();
+    gameScheduler = new GameScheduler();
+    gameLogicController = new GameLogicController(gameScheduler);
     gameAudioController = new GameAudioController();
     threadPoolExecutor = new ScheduledThreadPoolExecutor(threadPoolSize);
   }
@@ -72,6 +74,8 @@ public class EngineCore {
   private final GameLogicController gameLogicController;
   @Getter
   private final GameAudioController gameAudioController;
+  @Getter
+  private final GameScheduler gameScheduler;
   @Getter
   private GameResolution gameResolution;
   @Getter
@@ -112,11 +116,11 @@ public class EngineCore {
   }
 
   public void addMouseListener(MouseListener listener) {
-    mainWindow.addMouseListener(listener);
+    gameGraphicController.addMouseListener(listener);
   }
 
   public void addMouseMotionListener(MouseMotionListener listener) {
-    mainWindow.addMouseMotionListener(listener);
+    gameGraphicController.addMouseMotionListener(listener);
   }
 
   public int getActiveThreadCount() {
@@ -134,11 +138,11 @@ public class EngineCore {
     }
     this.gameResolution = startMenuData.getGameResolution();
     Dimension dimension = new Dimension(gameResolution.getWidth(), gameResolution.getHeight());
-    mainWindow.getContentPane().setPreferredSize(dimension);
+    gameGraphicController.setPreferredSize(dimension);
+    mainWindow.add(gameGraphicController);
     mainWindow.pack();
     mainWindow.setResizable(false);
     mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    mainWindow.add(gameGraphicController);
     mainWindow.setVisible(true);
     setup();
   }

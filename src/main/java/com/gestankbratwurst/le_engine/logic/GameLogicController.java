@@ -18,7 +18,8 @@ import java.util.Set;
  */
 public class GameLogicController implements Runnable {
 
-  public GameLogicController() {
+  public GameLogicController(GameScheduler gameScheduler) {
+    this.gameScheduler = gameScheduler;
     logicPriorityMap = new EnumMap<>(LogicPriority.class);
     for (LogicPriority logicPriority : LogicPriority.values()) {
       logicPriorityMap.put(logicPriority, new ObjectOpenHashSet<>());
@@ -32,6 +33,7 @@ public class GameLogicController implements Runnable {
   private long lastCheck;
   private long logicTicks;
   private final EnumMap<LogicPriority, ObjectSet<LogicElement>> logicPriorityMap;
+  private final GameScheduler gameScheduler;
 
   public double getTPS() {
     long sum = 0;
@@ -80,6 +82,7 @@ public class GameLogicController implements Runnable {
       logicTicks = 0;
       addTimeEstimate(delta);
     }
+    gameScheduler.onTick();
     for (LogicPriority priority : LogicPriority.values()) {
       Set<LogicElement> logicSet = logicPriorityMap.get(priority);
       for (LogicElement logicElement : logicSet) {
