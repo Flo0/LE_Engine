@@ -32,14 +32,18 @@ public class StartMenu extends JFrame {
     startMenuData.setGameResolution(GameResolution.LOW);
     JComboBox<GameResolution> resolutionChoose = new JComboBox(GameResolution.values());
     JCheckBox debugCheck = new JCheckBox("Console enabled", false);
+    JCheckBox barCheck = new JCheckBox("Borderless", false);
+    this.add(barCheck);
     resolutionChoose.setBounds(240, this.getHeight() / 3, 220, 28);
     debugCheck.setBounds(160, this.getHeight() / 3 + 32, 160, 28);
+    barCheck.setBounds(160, this.getHeight() / 3 + 64, 160, 28);
     JButton startButton = new JButton("Start");
     startButton.setBounds(160, this.getHeight() / 3, 72, 28);
     startButton.addActionListener(event -> {
       GameResolution res = (GameResolution) resolutionChoose.getSelectedItem();
       startMenuData.setGameResolution(res);
       startMenuData.setUseConsole(debugCheck.isSelected());
+      startMenuData.setEnableWindowBar(!barCheck.isSelected());
       engineCore.setSizeAndOpen(startMenuData);
       postLogin.accept(engineCore);
       menuInstance.setVisible(false);

@@ -139,10 +139,13 @@ public class EngineCore {
     this.gameResolution = startMenuData.getGameResolution();
     Dimension dimension = new Dimension(gameResolution.getWidth(), gameResolution.getHeight());
     gameGraphicController.setPreferredSize(dimension);
+    if (!startMenuData.isEnableWindowBar()) {
+      mainWindow.setUndecorated(true);
+    }
     mainWindow.add(gameGraphicController);
-    mainWindow.pack();
     mainWindow.setResizable(false);
     mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    mainWindow.pack();
     mainWindow.setVisible(true);
     setup();
   }

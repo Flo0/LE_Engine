@@ -16,5 +16,6 @@ public class StartMenuData {
 
   private GameResolution gameResolution;
   private boolean useConsole;
+  private boolean enableWindowBar;
 
 }
