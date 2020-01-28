@@ -1,17 +1,18 @@
 package com.gestankbratwurst.le_engine.graphics;
 
 import com.gestankbratwurst.le_engine.EngineCore;
-import com.gestankbratwurst.le_engine.debug.DebugConsole;
+import com.gestankbratwurst.le_engine.startmenu.GameResolution;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferStrategy;
 import java.util.EnumMap;
 import java.util.concurrent.locks.LockSupport;
-import javax.swing.JPanel;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 
 /*******************************************************
  * Copyright (C) Gestankbratwurst suotokka@gmail.com
@@ -22,14 +23,15 @@ import lombok.SneakyThrows;
  * permission of the owner.
  *
  */
-public class GameGraphicController extends JPanel implements Runnable {
+public class GameGraphicController extends Canvas implements Runnable {
 
   private static final int FRAME_TRACK_AMOUNT = 5;
   private static final long MS_PER_FPS_REFRESH = 1000L;
 
   public GameGraphicController(EngineCore engineCore) {
     this.engineCore = engineCore;
-    this.setDoubleBuffered(true);
+    this.setIgnoreRepaint(true);
+    //this.setDoubleBuffered(true);
     graphicsQueue = new EnumMap<>(GraphicPriority.class);
     for (GraphicPriority priority : GraphicPriority.values()) {
       graphicsQueue.put(priority, new Object2ObjectOpenHashMap<>());
@@ -63,6 +65,12 @@ public class GameGraphicController extends JPanel implements Runnable {
   @Getter
   @Setter
   private boolean fpsLimitEnabled = false;
+  @Getter
+  @Setter
+  private boolean graphicsEnabled = false;
+  @Getter
+  @Setter
+  private GameResolution gameResolution;
 
   public double getFPS() {
     if (System.currentTimeMillis() - lastCheck >= MS_PER_FPS_REFRESH) {
@@ -98,8 +106,12 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
-  @Override
-  public void paint(Graphics graphics) {
+  private void render(Graphics graphics) {
+    //GameResolution gameResolution = engineCore.getGameResolution();
+    //BufferedImage buffer = new BufferedImage(gameResolution.getWidth(), gameResolution.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    //Graphics bufferGraphics = buffer.getGraphics();
+    //VolatileImage buffer = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
+    //graphics = this.getBufferStrategy().getDrawGraphics();
     synchronized (graphicsQueue) {
       for (GraphicPriority priority : GraphicPriority.values()) {
         for (GTask task : graphicsQueue.get(priority).values()) {
@@ -107,6 +119,7 @@ public class GameGraphicController extends JPanel implements Runnable {
         }
       }
     }
+    //graphics.drawImage(buffer, 0, 0, null);
     framesDrawn++;
     if (System.currentTimeMillis() - lastFrameCheck >= 1000L) {
       lastFrameCheck = System.currentTimeMillis();
@@ -127,21 +140,25 @@ public class GameGraphicController extends JPanel implements Runnable {
     }
   }
 
-  private void scheduleRepaint() {
+  public void customRepaint() {
+    BufferStrategy bs = this.getBufferStrategy();
+    Graphics2D g2 = (Graphics2D) bs.getDrawGraphics();
+
     try {
-      repaint();
-    } catch (Exception e) {
-      for (StackTraceElement trace : e.getStackTrace()) {
-        DebugConsole.log(trace);
-      }
+      g2 = (Graphics2D) bs.getDrawGraphics();
+      this.render(g2);
+    } finally {
+      g2.dispose();
     }
+    bs.show();
   }
 
   @Override
   public void run() {
+    //VolatileImage volatileImage = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
     while (engineCore.isGameRunning()) {
       long prePaint = System.nanoTime();
-      scheduleRepaint();
+      this.customRepaint();
       if (fpsLimitEnabled) {
         long paintTimeMicros = (System.nanoTime() - prePaint) / 1000L;
         long microsToSleep = 1000000L / fpsLimit - paintTimeMicros;

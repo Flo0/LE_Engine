@@ -81,7 +81,7 @@ public class EngineCore {
   @Getter
   private final DataManager dataManager;
   @Getter
-  private boolean gameRunning = false;
+  private boolean gameRunning = true;
   @Getter
   private boolean consoleEnabled = false;
 
@@ -104,11 +104,11 @@ public class EngineCore {
   }
 
   public void addKeyListener(KeyListener listener) {
-    mainWindow.addKeyListener(listener);
+    gameGraphicController.addKeyListener(listener);
   }
 
   public void addComponentListener(ComponentListener listener) {
-    mainWindow.addComponentListener(listener);
+    gameGraphicController.addComponentListener(listener);
   }
 
   public void addContainerListener(ContainerListener listener) {
@@ -139,14 +139,16 @@ public class EngineCore {
     this.gameResolution = startMenuData.getGameResolution();
     Dimension dimension = new Dimension(gameResolution.getWidth(), gameResolution.getHeight());
     gameGraphicController.setPreferredSize(dimension);
+    gameGraphicController.setGameResolution(gameResolution);
     if (!startMenuData.isEnableWindowBar()) {
       mainWindow.setUndecorated(true);
     }
-    mainWindow.add(gameGraphicController);
     mainWindow.setResizable(false);
     mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    mainWindow.add(gameGraphicController);
     mainWindow.pack();
     mainWindow.setVisible(true);
+    gameGraphicController.createBufferStrategy(2);
     setup();
   }
 
