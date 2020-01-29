@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
 import java.awt.image.BufferStrategy;
 import java.awt.image.VolatileImage;
 import java.util.EnumMap;
@@ -30,6 +31,7 @@ public class GameGraphicController extends Canvas implements Runnable {
   private static final long MS_PER_FPS_REFRESH = 1000L;
 
   public GameGraphicController(EngineCore engineCore) {
+    this.graphicsDevice = engineCore.getGraphicsDevice();
     this.engineCore = engineCore;
     this.bufferStrategyEnabled = engineCore.getBufferStrategyValue() != BufferStrategyValue.NONE;
     this.setIgnoreRepaint(this.bufferStrategyEnabled);
@@ -43,6 +45,7 @@ public class GameGraphicController extends Canvas implements Runnable {
     this.fpsFont = new Font("SansSerif", Font.BOLD, 26);
   }
 
+  private final GraphicsDevice graphicsDevice;
   private boolean volatilePaintingStarted = false;
   private final boolean bufferStrategyEnabled;
   private long framesDrawn = 0;
@@ -110,6 +113,7 @@ public class GameGraphicController extends Canvas implements Runnable {
   }
 
   private void render(Graphics graphics) {
+    System.out.println("Render");
     for (GraphicPriority priority : GraphicPriority.values()) {
       for (GTask task : graphicsQueue.get(priority).values()) {
         task.accept(graphics);
@@ -146,19 +150,18 @@ public class GameGraphicController extends Canvas implements Runnable {
     bs.show();
   }
 
-
   @Override
   public void paint(Graphics graphics) {
-    if (volatilePaintingStarted) {
-      return;
-    }
-    volatilePaintingStarted = true;
     super.paint(graphics);
     repaintVolatile(graphics);
   }
 
   private void repaintVolatile(Graphics graphics) {
-    VolatileImage volatileImage = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
+    VolatileImage volatileImage = graphicsDevice.getDefaultConfiguration()
+        .createCompatibleVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
+    if (volatileImage.validate(graphicsDevice.getDefaultConfiguration()) != VolatileImage.IMAGE_OK) {
+      return;
+    }
     Graphics2D g2 = volatileImage.createGraphics();
     try {
       this.render(g2);

@@ -19,7 +19,7 @@ public enum BufferStrategyValue {
   X4(4, "x4"),
   X3(3, "x3"),
   X2(2, "x2"),
-  NONE(0, "None");
+  NONE(0, "None [Nicht unterstützt]");
 
   @Getter
   private final int buffer;
