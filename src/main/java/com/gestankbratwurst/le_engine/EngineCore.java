@@ -22,6 +22,7 @@ import java.awt.event.ContainerListener;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +108,12 @@ public class EngineCore {
       e.printStackTrace();
     }
     threadPoolExecutor.shutdown();
-    mainWindow.dispose();
+    mainWindow.dispatchEvent(new WindowEvent(mainWindow, WindowEvent.WINDOW_CLOSING));
+  }
+
+  public void shutdownWithoutSave() {
+    threadPoolExecutor.shutdown();
+    mainWindow.dispatchEvent(new WindowEvent(mainWindow, WindowEvent.WINDOW_CLOSING));
   }
 
   public void registerRootKeyboardAction(ActionListener listener, KeyStroke keyStroke, int condition) {
