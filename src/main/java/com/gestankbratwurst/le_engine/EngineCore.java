@@ -3,6 +3,7 @@ package com.gestankbratwurst.le_engine;
 import com.gestankbratwurst.le_engine.audio.GameAudioController;
 import com.gestankbratwurst.le_engine.data.DataManager;
 import com.gestankbratwurst.le_engine.debug.DebugConsole;
+import com.gestankbratwurst.le_engine.graphics.BufferStrategyValue;
 import com.gestankbratwurst.le_engine.graphics.GameGraphicController;
 import com.gestankbratwurst.le_engine.logic.GameLogicController;
 import com.gestankbratwurst.le_engine.logic.GameScheduler;
@@ -12,6 +13,9 @@ import com.gestankbratwurst.le_engine.startmenu.StartMenu;
 import com.gestankbratwurst.le_engine.startmenu.StartMenuData;
 import com.google.common.base.Preconditions;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentListener;
 import java.awt.event.ContainerListener;
@@ -24,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.KeyStroke;
 import lombok.Getter;
 
@@ -55,11 +60,13 @@ public class EngineCore {
     this.logicPrecision = logicPrecision;
     this.dataManager = new DataManager(this);
     mainWindow = new JFrame(gameName);
-    gameGraphicController = new GameGraphicController(this);
     gameScheduler = new GameScheduler();
     gameLogicController = new GameLogicController(gameScheduler);
     gameAudioController = new GameAudioController();
     threadPoolExecutor = new ScheduledThreadPoolExecutor(threadPoolSize);
+    graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+    screenWidth = graphicsDevice.getDisplayMode().getWidth();
+    screenHeight = graphicsDevice.getDisplayMode().getHeight();
   }
 
   @Getter
@@ -69,7 +76,7 @@ public class EngineCore {
   @Getter
   private final JFrame mainWindow;
   @Getter
-  private final GameGraphicController gameGraphicController;
+  private GameGraphicController gameGraphicController;
   @Getter
   private final GameLogicController gameLogicController;
   @Getter
@@ -84,6 +91,14 @@ public class EngineCore {
   private boolean gameRunning = true;
   @Getter
   private boolean consoleEnabled = false;
+  @Getter
+  private BufferStrategyValue bufferStrategyValue;
+  @Getter
+  private final int screenWidth;
+  @Getter
+  private final int screenHeight;
+  @Getter
+  private final GraphicsDevice graphicsDevice;
 
   public void shutdown() {
     try {
@@ -136,19 +151,46 @@ public class EngineCore {
       DebugConsole.create();
       this.consoleEnabled = true;
     }
-    this.gameResolution = startMenuData.getGameResolution();
+    if (startMenuData.isFullScreenEnabled()) {
+      this.gameResolution = GameResolution.fromScreen(screenWidth, screenHeight);
+    } else {
+      this.gameResolution = startMenuData.getGameResolution();
+    }
     Dimension dimension = new Dimension(gameResolution.getWidth(), gameResolution.getHeight());
+    this.bufferStrategyValue = startMenuData.getBufferStrategyValue();
+    gameGraphicController = new GameGraphicController(this);
     gameGraphicController.setPreferredSize(dimension);
     gameGraphicController.setGameResolution(gameResolution);
     if (!startMenuData.isEnableWindowBar()) {
       mainWindow.setUndecorated(true);
+    }
+    if (startMenuData.isFullScreenEnabled()) {
+      if (GameResolution.isSupported(screenWidth, screenHeight)) {
+        gameGraphicController.setPreferredSize(dimension);
+        mainWindow.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        mainWindow.setUndecorated(true);
+        graphicsDevice.setFullScreenWindow(mainWindow);
+      } else {
+        JFrame errorFrame = new JFrame("Error");
+        errorFrame.setSize(640, 480);
+        errorFrame.setResizable(false);
+        errorFrame.setLocationRelativeTo(null);
+        JLabel label = new JLabel("Only true 16:9 resolutions are supported!");
+        label.setFont(new Font("Arial", Font.BOLD, 32));
+        errorFrame.add(label);
+        errorFrame.setVisible(true);
+      }
     }
     mainWindow.setResizable(false);
     mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     mainWindow.add(gameGraphicController);
     mainWindow.pack();
     mainWindow.setVisible(true);
-    gameGraphicController.createBufferStrategy(2);
+
+    if (bufferStrategyValue != BufferStrategyValue.NONE) {
+      gameGraphicController.createBufferStrategy(bufferStrategyValue.getBuffer());
+    }
+
     setup();
   }
 

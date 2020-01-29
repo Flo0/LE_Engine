@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
+import java.awt.image.VolatileImage;
 import java.util.EnumMap;
 import java.util.concurrent.locks.LockSupport;
 import lombok.Getter;
@@ -30,8 +31,8 @@ public class GameGraphicController extends Canvas implements Runnable {
 
   public GameGraphicController(EngineCore engineCore) {
     this.engineCore = engineCore;
-    this.setIgnoreRepaint(true);
-    //this.setDoubleBuffered(true);
+    this.bufferStrategyEnabled = engineCore.getBufferStrategyValue() != BufferStrategyValue.NONE;
+    this.setIgnoreRepaint(this.bufferStrategyEnabled);
     graphicsQueue = new EnumMap<>(GraphicPriority.class);
     for (GraphicPriority priority : GraphicPriority.values()) {
       graphicsQueue.put(priority, new Object2ObjectOpenHashMap<>());
@@ -42,6 +43,8 @@ public class GameGraphicController extends Canvas implements Runnable {
     this.fpsFont = new Font("SansSerif", Font.BOLD, 26);
   }
 
+  private boolean volatilePaintingStarted = false;
+  private final boolean bufferStrategyEnabled;
   private long framesDrawn = 0;
   private long lastFrameCheck = System.currentTimeMillis();
   private double lastEstimate = 0D;
@@ -107,19 +110,11 @@ public class GameGraphicController extends Canvas implements Runnable {
   }
 
   private void render(Graphics graphics) {
-    //GameResolution gameResolution = engineCore.getGameResolution();
-    //BufferedImage buffer = new BufferedImage(gameResolution.getWidth(), gameResolution.getHeight(), BufferedImage.TYPE_INT_ARGB);
-    //Graphics bufferGraphics = buffer.getGraphics();
-    //VolatileImage buffer = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
-    //graphics = this.getBufferStrategy().getDrawGraphics();
-    synchronized (graphicsQueue) {
-      for (GraphicPriority priority : GraphicPriority.values()) {
-        for (GTask task : graphicsQueue.get(priority).values()) {
-          task.accept(graphics);
-        }
+    for (GraphicPriority priority : GraphicPriority.values()) {
+      for (GTask task : graphicsQueue.get(priority).values()) {
+        task.accept(graphics);
       }
     }
-    //graphics.drawImage(buffer, 0, 0, null);
     framesDrawn++;
     if (System.currentTimeMillis() - lastFrameCheck >= 1000L) {
       lastFrameCheck = System.currentTimeMillis();
@@ -140,12 +135,10 @@ public class GameGraphicController extends Canvas implements Runnable {
     }
   }
 
-  public void customRepaint() {
+  private void repaintBufferStrategy() {
     BufferStrategy bs = this.getBufferStrategy();
     Graphics2D g2 = (Graphics2D) bs.getDrawGraphics();
-
     try {
-      g2 = (Graphics2D) bs.getDrawGraphics();
       this.render(g2);
     } finally {
       g2.dispose();
@@ -153,16 +146,50 @@ public class GameGraphicController extends Canvas implements Runnable {
     bs.show();
   }
 
+
+  @Override
+  public void paint(Graphics graphics) {
+    if (volatilePaintingStarted) {
+      return;
+    }
+    volatilePaintingStarted = true;
+    super.paint(graphics);
+    repaintVolatile(graphics);
+  }
+
+  private void repaintVolatile(Graphics graphics) {
+    VolatileImage volatileImage = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
+    Graphics2D g2 = volatileImage.createGraphics();
+    try {
+      this.render(g2);
+    } finally {
+      g2.dispose();
+    }
+    graphics.drawImage(volatileImage, 0, 0, null);
+    volatilePaintingStarted = false;
+  }
+
   @Override
   public void run() {
-    //VolatileImage volatileImage = this.createVolatileImage(gameResolution.getWidth(), gameResolution.getHeight());
-    while (engineCore.isGameRunning()) {
-      long prePaint = System.nanoTime();
-      this.customRepaint();
-      if (fpsLimitEnabled) {
-        long paintTimeMicros = (System.nanoTime() - prePaint) / 1000L;
-        long microsToSleep = 1000000L / fpsLimit - paintTimeMicros;
-        sleepMicros(microsToSleep);
+    if (bufferStrategyEnabled) {
+      while (engineCore.isGameRunning()) {
+        long prePaint = System.nanoTime();
+        this.repaintBufferStrategy();
+        if (fpsLimitEnabled) {
+          long paintTimeMicros = (System.nanoTime() - prePaint) / 1000L;
+          long microsToSleep = 1000000L / fpsLimit - paintTimeMicros;
+          sleepMicros(microsToSleep);
+        }
+      }
+    } else {
+      while (engineCore.isGameRunning()) {
+        long prePaint = System.nanoTime();
+        this.repaint();
+        if (fpsLimitEnabled) {
+          long paintTimeMicros = (System.nanoTime() - prePaint) / 1000L;
+          long microsToSleep = 1000000L / fpsLimit - paintTimeMicros;
+          sleepMicros(microsToSleep);
+        }
       }
     }
   }

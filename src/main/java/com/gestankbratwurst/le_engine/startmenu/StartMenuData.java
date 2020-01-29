@@ -1,6 +1,8 @@
 package com.gestankbratwurst.le_engine.startmenu;
 
-import lombok.Data;
+import com.gestankbratwurst.le_engine.graphics.BufferStrategyValue;
+import lombok.Getter;
+import lombok.Setter;
 
 /*******************************************************
  * Copyright (C) Gestankbratwurst suotokka@gmail.com
@@ -11,11 +13,23 @@ import lombok.Data;
  * permission of the owner.
  *
  */
-@Data
+
 public class StartMenuData {
 
+  @Getter
+  @Setter
   private GameResolution gameResolution;
+  @Getter
+  @Setter
   private boolean useConsole;
+  @Getter
+  @Setter
   private boolean enableWindowBar;
+  @Getter
+  @Setter
+  private boolean fullScreenEnabled;
+  @Getter
+  @Setter
+  private BufferStrategyValue bufferStrategyValue;
 
 }

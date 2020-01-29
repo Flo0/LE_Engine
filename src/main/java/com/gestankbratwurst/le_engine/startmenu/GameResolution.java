@@ -30,6 +30,28 @@ public enum GameResolution {
   @Getter
   private final int height;
 
+  public static GameResolution fromScreen(int width, int height) {
+    for (GameResolution resolution : GameResolution.values()) {
+      if (resolution.width == width) {
+        if (resolution.height == height) {
+          return resolution;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isSupported(int width, int height) {
+    for (GameResolution resolution : GameResolution.values()) {
+      if (resolution.width == width) {
+        if (resolution.height == height) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public String getDisplay() {
     return width + "x" + height;
   }
