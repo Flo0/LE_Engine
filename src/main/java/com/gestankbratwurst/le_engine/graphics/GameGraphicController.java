@@ -113,7 +113,6 @@ public class GameGraphicController extends Canvas implements Runnable {
   }
 
   private void render(Graphics graphics) {
-    System.out.println("Render");
     for (GraphicPriority priority : GraphicPriority.values()) {
       for (GTask task : graphicsQueue.get(priority).values()) {
         task.accept(graphics);
